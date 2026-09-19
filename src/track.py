@@ -1,12 +1,11 @@
 """
 Fictional Formula SAE-style track definition.
 
-The track is modelled as a single distance line from 0 m to TRACK_LENGTH_M.
+The track is modelled as a single distance line from 0m to TRACK_LENGTH_M.
 Every point on that line belongs to exactly one named section, which carries
 the target speed and cornering characteristics the simulated driver aims for.
 
-This is a made-up circuit. It is not based on any real venue, and the numbers
-are chosen to be plausible for an FSAE autocross-style layout rather than to
+This is a made-up circuit, the numbers are chosen to be plausible for an FSAE autocross-style layout rather than to
 model a specific car or track.
 """
 
