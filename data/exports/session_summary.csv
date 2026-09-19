@@ -1,0 +1,7 @@
+session_id,label,ambient_temp_c,driver_aggression,driver_consistency,laps_completed,best_lap_s,avg_lap_s,worst_lap_s,lap_time_spread_s,top_speed_kmh,avg_speed_kmh,peak_rpm,avg_full_throttle_pct,total_braking_events
+S05,Push session,24.0,1.06,0.94,8,55.3,55.66,57.6,2.3,112.9,71.1,11016.0,28.2,25
+S06,Weak cell under load,23.0,1.03,0.91,8,56.1,56.7,59.0,2.9,112.9,69.8,11013.0,28.3,26
+S03,Hot afternoon running,33.0,1.02,0.9,8,56.4,57.01,59.2,2.8,112.9,69.4,11013.0,28.3,25
+S04,Cooling system degraded,29.0,1.01,0.88,8,56.9,57.61,59.7,2.8,112.9,68.7,11016.0,28.3,25
+S02,Baseline practice,21.0,1.0,0.92,8,57.7,58.21,60.7,3.0,112.9,68.0,11013.0,28.3,25
+S01,Cool morning shakedown,16.0,0.94,0.85,8,60.8,61.26,63.3,2.5,111.9,64.6,10930.0,29.0,25

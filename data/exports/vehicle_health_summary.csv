@@ -1,0 +1,7 @@
+session_id,label,ambient_temp_c,seeded_fault,peak_temp_c,min_voltage_v,peak_rpm,temp_rise_over_ambient_c,temp_status,voltage_status,rpm_status,overall_status,observation
+S01,Cool morning shakedown,16.0,,62.7,380.1,10930.0,46.7,normal,normal,normal,OK,
+S02,Baseline practice,21.0,,70.5,380.5,11013.0,49.5,normal,normal,normal,OK,
+S03,Hot afternoon running,33.0,,83.4,380.3,11013.0,50.4,normal,normal,normal,OK,
+S04,Cooling system degraded,29.0,cooling,131.0,380.2,11016.0,101.9,HIGH,normal,normal,ATTENTION,"peak powertrain temperature 131.0 C, 101.9 C above ambient (+51.6 C versus the field median rise)"
+S05,Push session,24.0,,74.9,380.1,11016.0,50.9,normal,normal,normal,OK,
+S06,Weak cell under load,23.0,battery,73.4,366.0,11013.0,50.3,normal,LOW,normal,ATTENTION,"minimum pack voltage 366.0 V, below the 375 V watch threshold"
