@@ -18,6 +18,7 @@ import pandas as pd
 
 from src import vehicle
 from src.track import (
+    SECTORS,
     TRACK_LENGTH_M,
     get_section,
     get_sector,
@@ -261,12 +262,21 @@ def simulate_lap(
     """
     rows = []
 
-    # Lap-to-lap variation: a less consistent driver varies more between
-    # laps in both pace and smoothness.
     consistency = profile["consistency"]
-    lap_pace = rng.normal(1.0, (1.0 - consistency) * 0.05)
-    lap_aggression = profile["aggression"] * float(np.clip(lap_pace, 0.88, 1.10))
     noise_scale = 2.0 - consistency
+
+    # Pace varies within a lap, not just between laps. A driver might nail
+    # sector 1 and then make a mistake in sector 3 on the same lap, which
+    # is what makes sector-level comparison worth doing at all.
+    #
+    # Each sector gets its own multiplier: a lap-wide component (the driver
+    # is generally on it or not) plus an independent per-sector component.
+    lap_pace = rng.normal(1.0, (1.0 - consistency) * 0.035)
+    sector_pace = {}
+    for sector in SECTORS:
+        wobble = rng.normal(0.0, (1.0 - consistency) * 0.055)
+        combined = float(np.clip(lap_pace + wobble, 0.86, 1.12))
+        sector_pace[sector["name"]] = profile["aggression"] * combined
 
     # Faults. Both are deliberately injected so the health analysis has
     # something to find; they are synthetic, not discovered problems.
@@ -279,6 +289,8 @@ def simulate_lap(
 
     for _ in range(MAX_STEPS_PER_LAP):
         section = get_section(distance_m)
+        sector_name = get_sector(distance_m)
+        lap_aggression = sector_pace[sector_name]
 
         throttle_pct, brake_pct = choose_inputs(
             speed_kmh, distance_m, lap_aggression, rng, noise_scale
