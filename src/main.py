@@ -9,7 +9,7 @@ Each stage is also runnable on its own (python3 -m src.generate_telemetry
 and so on) for development. This module exists so that someone who has just
 cloned the repository can reproduce everything with one command.
 
-All data is synthetic. See README.
+
 """
 
 import argparse

@@ -31,7 +31,7 @@ def test_fastest_lap_ranking_is_correct():
         best = group.loc[group["lap_rank_in_session"] == 1]
 
         # Ties are possible and correct: RANK() gives equal lap times the
-        # same position, so a session can have more than one rank-1 lap.
+        # same position, so a session can have more than one rank-1 lap
         assert len(best) >= 1
         assert (best["lap_time_s"] == group["lap_time_s"].min()).all()
         assert (best["gap_to_session_best_s"] == 0.0).all()
@@ -99,7 +99,7 @@ def test_lap_comparison_delta_matches_the_lap_time_gap():
     measured_gap = comparison["time_delta_s"].iloc[-1]
 
     # One sample interval of tolerance, since the grid is reconstructed
-    # from 10 Hz samples.
+    # from 10 Hz samples
     assert measured_gap == pytest.approx(expected_gap, abs=0.15)
 
 
@@ -117,7 +117,7 @@ def test_seeded_faults_are_flagged_and_healthy_sessions_are_not():
     assert flagged == seeded
     assert len(seeded) == 2
 
-    # The classifiers themselves, at the boundaries.
+    # The classifiers themselves, at the boundaries
     assert classify_temperature(120.0) == "HIGH"
     assert classify_temperature(100.0) == "ELEVATED"
     assert classify_temperature(80.0) == "normal"

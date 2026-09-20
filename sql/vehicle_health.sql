@@ -1,8 +1,7 @@
 -- Formula SAE Telemetry Analyzer - vehicle health queries
---
--- Simple threshold checks over simulated telemetry. These are observations
--- about synthetic data, not safety-critical diagnostics.
---
+
+-- Simple threshold checks over simulated telemetry. 
+
 -- Two sessions in this dataset carry deliberately injected faults (a
 -- degraded cooling system and a weak battery cell). They were seeded so
 -- the detection logic could be validated against a known answer.
@@ -37,11 +36,11 @@ ORDER BY peak_temp_c DESC;
 
 
 -- name: temperature_rise_per_lap
--- How much powertrain temperature climbed between consecutive laps.
+-- How much powertrain temperature climbed between consecutive laps
 --
 -- LAG() gives the previous lap's peak. A healthy car heats up early and
 -- then levels off as cooling catches up with heat production; a car whose
--- temperature keeps climbing lap after lap is not rejecting enough heat.
+-- temperature keeps climbing lap after lap is not rejecting enough heat
 SELECT
     l.session_id,
     l.lap_number,
@@ -67,12 +66,12 @@ ORDER BY l.session_id, l.lap_number;
 
 
 -- name: voltage_sag_under_load
--- Voltage while working hard versus voltage while coasting.
+-- Voltage while working hard versus voltage while coasting
 --
 -- Every pack sags under load; a pack that sags much harder than the others
 -- has higher internal resistance, which is what a weak cell looks like in
 -- telemetry. Comparing loaded to unloaded within the same session controls
--- for state of charge.
+-- for state of charge
 WITH load_split AS (
     SELECT
         session_id,
@@ -102,7 +101,7 @@ ORDER BY sag_v DESC;
 
 -- name: high_temperature_samples
 -- Individual samples above the warning threshold, grouped by where on
--- track they occurred. Tells you not just that the car got hot, but where.
+-- track they occurred. Tells you not just that the car got hot, but where
 SELECT
     t.session_id,
     t.track_section,

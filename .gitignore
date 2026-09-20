@@ -24,3 +24,8 @@ Thumbs.db
 # Editor settings
 .vscode/
 .idea/
+
+# Tableau lock files
+.~*.twb
+.~*.twbr
+.~*.twbx

@@ -4,7 +4,7 @@ Lap-to-lap comparison on a common distance grid.
 Two laps cannot be compared sample by sample: they have different sample
 counts because they took different amounts of time, so the same index is a
 different place on track. Both laps are therefore interpolated onto a
-shared distance grid, after which every comparison is like-for-like.
+shared distance grid.
 
 The headline output is the cumulative time delta over distance: at each
 point on track, how much time separates the two laps. Where that line
@@ -19,11 +19,11 @@ from src.track import SECTORS, TRACK_LENGTH_M, get_section
 
 # Spacing of the shared distance grid. 5 m gives 221 points per lap, which
 # is finer than the track's shortest section (60 m) and coarse enough that
-# the interpolation is not just reproducing sample noise.
+# the interpolation is not just reproducing sample noise
 GRID_SPACING_M = 5.0
 
-# A delta must exceed this to be reported as a meaningful gain or loss.
-# Below it, the difference is within the noise of a 10 Hz sample rate.
+# A delta must exceed this to be reported as a meaningful gain or loss
+# Below it, the difference is within the noise of a 10 Hz sample rate
 SIGNIFICANT_DELTA_S = 0.05
 
 
@@ -75,7 +75,7 @@ def resample_to_grid(lap, grid):
     frame = pd.DataFrame(resampled)
 
     # Section and sector come from the track definition rather than from
-    # the data, since they are a property of position, not of the lap.
+    # the data
     frame["track_section"] = [get_section(d)["name"] for d in grid]
 
     return frame
@@ -112,13 +112,13 @@ def compare_laps(session_a, lap_a, session_b, lap_b):
     )
 
     # The cumulative time delta: how far apart the two laps are, in seconds,
-    # by the time each reaches this point on track.
+    # by the time each reaches this point on track
     comparison["time_delta_s"] = (
         comparison["elapsed_b_s"] - comparison["elapsed_a_s"]
     ).round(3)
 
     # The rate of change of the delta tells you where time is actually
-    # being lost, as opposed to where the gap merely happens to be large.
+    # being lost, as opposed to where the gap merely happens to be large
     comparison["delta_rate_s_per_100m"] = (
         comparison["time_delta_s"].diff() * (100.0 / GRID_SPACING_M)
     ).round(3)
@@ -130,7 +130,7 @@ def sector_deltas(comparison):
     """Return the time gained or lost in each sector.
 
     Taking the change in cumulative delta across a sector isolates that
-    sector's contribution, rather than reporting the running total.
+    sector's contribution, rather than reporting the running total
     """
     rows = []
     for sector in SECTORS:
@@ -182,13 +182,13 @@ def braking_points(session_id, lap_number, threshold_pct=30.0):
     Braking point is one of the clearest differences between two laps: a
     driver who brakes ten metres later carries speed further down the
     straight, which is usually worth more than anything they do in the
-    corner itself.
+    corner itself
     """
     lap = load_lap(session_id, lap_number)
     braking = lap["brake_pressure_pct"] >= threshold_pct
 
     # A braking zone starts where braking becomes active having not been
-    # active on the previous sample.
+    # active on the previous sample
     starts = braking & ~braking.shift(1, fill_value=False)
 
     rows = []
@@ -223,7 +223,7 @@ def compare_braking_points(session_a, lap_a, session_b, lap_b):
                 "section": a.loc[i, "section"],
                 "brake_point_a_m": a.loc[i, "braking_start_m"],
                 "brake_point_b_m": b.loc[i, "braking_start_m"],
-                # Positive means lap B braked later, which is usually quicker.
+                # Positive means lap B braked later, which is usually quicker
                 "later_by_m": round(
                     b.loc[i, "braking_start_m"] - a.loc[i, "braking_start_m"], 1
                 ),
@@ -262,7 +262,7 @@ def summarise_comparison(session_a, lap_a, session_b, lap_b):
     }
 
 
-# --- Printable report ----------------------------------------------------
+# Printable report 
 
 
 def print_comparison(session_a, lap_a, session_b, lap_b):
@@ -310,7 +310,7 @@ def print_comparison(session_a, lap_a, session_b, lap_b):
     )
 
     # Where the delta was changing fastest, which is where the driver
-    # actually lost the time rather than where the gap was widest.
+    # actually lost the time rather than where the gap was widest
     significant = comparison[
         comparison["delta_rate_s_per_100m"].abs() > SIGNIFICANT_DELTA_S
     ]
@@ -328,8 +328,8 @@ def print_comparison(session_a, lap_a, session_b, lap_b):
 
 
 def main():
-    # Compare the fastest and slowest laps of the baseline session, which
-    # is the comparison a driver would actually want to see.
+    # Compare the fastest and slowest laps of the baseline session
+
     laps = run_query(
         """
         SELECT lap_number, lap_time_s

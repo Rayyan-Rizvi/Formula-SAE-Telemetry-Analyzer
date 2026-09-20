@@ -1,15 +1,12 @@
 -- Formula SAE Telemetry Analyzer - lap and session performance queries
 --
 -- Each query is preceded by a "-- name: <id>" line. src/run_sql.py splits
--- the file on those markers so individual queries can be run by name.
---
--- All results are from synthetic telemetry.
-
+-- the file on those markers so individual queries can be run by name
 
 -- name: session_summary
--- One row per session: pace, top speed, and the conditions it ran in.
--- Joining laps to sessions is what lets us relate results to conditions,
--- e.g. whether hotter sessions ran hotter.
+-- One row per session: pace, top speed, and the conditions it ran in
+-- Joining laps to sessions is what lets us relate results to conditions
+
 SELECT
     s.session_id,
     s.label,
@@ -35,9 +32,9 @@ ORDER BY best_lap_s;
 
 
 -- name: fastest_laps_overall
--- The ten quickest laps across every session, ranked.
+-- The ten quickest laps across every session, ranked
 -- RANK() is used rather than ROW_NUMBER() so that tied lap times share a
--- position, which is how timing sheets normally present results.
+-- position, which is how timing sheets normally present results
 SELECT
     RANK() OVER (ORDER BY l.lap_time_s) AS overall_rank,
     l.session_id,
@@ -55,7 +52,7 @@ LIMIT 10;
 -- name: lap_ranking_by_session
 -- Every lap, ranked within its own session, with the gap to that
 -- session's best lap. PARTITION BY restarts the ranking for each session,
--- so each one gets its own 1..8 rather than a single global ordering.
+-- so each one gets its own 1..8 rather than a single global ordering
 SELECT
     l.session_id,
     l.lap_number,
@@ -76,7 +73,7 @@ ORDER BY l.session_id, l.lap_number;
 -- How each lap compares to the one immediately before it.
 -- LAG() reaches back one row within the session to get the previous lap's
 -- time. This is how you see a driver building pace across a session, or
--- dropping off as tyres and temperatures go away.
+-- dropping off as tyres and temperatures go away
 SELECT
     l.session_id,
     l.lap_number,
@@ -108,7 +105,7 @@ ORDER BY l.session_id, l.lap_number;
 -- name: sector_best_times
 -- The quickest time recorded in each sector of each session, and which
 -- lap set it. A CTE ranks every sector attempt, then the outer query keeps
--- only the winners.
+-- only the winners
 WITH ranked_sectors AS (
     SELECT
         session_id,
@@ -137,11 +134,11 @@ ORDER BY session_id, sector;
 
 -- name: theoretical_best_lap
 -- The lap a driver could have done by stringing together their best
--- sector times, versus the best lap they actually managed.
+-- sector times, versus the best lap they actually managed
 --
 -- The difference is time left on the table: if it is large, the driver
 -- was quick in different places on different laps rather than putting a
--- complete lap together.
+-- complete lap together
 WITH best_sectors AS (
     SELECT
         session_id,
@@ -178,9 +175,9 @@ ORDER BY time_left_on_table_s DESC;
 
 
 -- name: section_speed_profile
--- Average behaviour in each named track section, across all sessions.
+-- Average behaviour in each named track section, across all sessions
 -- Useful for sanity-checking the simulation: the hairpin should be the
--- slowest point and the long straight the fastest.
+-- slowest point and the long straight the fastest
 SELECT
     t.track_section,
     ROUND(AVG(t.speed_kmh), 1)          AS avg_speed_kmh,
@@ -196,9 +193,9 @@ ORDER BY avg_speed_kmh DESC;
 
 
 -- name: sector_comparison_by_session
--- Sector pace per session, with each sector's fastest session flagged.
+-- Sector pace per session, with each sector's fastest session flagged
 -- Shows whether a driver is quick everywhere or only in certain parts of
--- the lap.
+-- the lap
 WITH session_sector_avg AS (
     SELECT
         session_id,

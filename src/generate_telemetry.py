@@ -1,7 +1,7 @@
 """
 Synthetic telemetry generator.
 
-Simulates a fictional Formula SAE-style car completing laps of the track
+Simulates a fictional Formula style car completing laps of the track
 defined in src/track.py, and writes the resulting sensor readings to CSV.
 
 The simulation advances in fixed time steps. At each step the driver model
@@ -10,7 +10,7 @@ and the vehicle model turns those inputs into a new speed. Distance is then
 advanced by speed * dt. A lap ends when distance passes the track length,
 so LAP TIME IS A RESULT OF THE SIMULATION, never a generated number.
 
-All data produced here is synthetic. No real telemetry is used.
+
 """
 
 import numpy as np
@@ -25,7 +25,7 @@ from src.track import (
     upcoming_target_speed,
 )
 
-# --- Simulation settings -------------------------------------------------
+# Simulation settings 
 
 DT_S = 0.1                     # time step: 10 Hz sampling
 LOOKAHEAD_M = 55.0             # how far ahead the driver model looks
@@ -35,7 +35,7 @@ LAPS_PER_SESSION = 8
 MAX_STEPS_PER_LAP = 3000       # safety limit; a normal lap is ~600 steps
 
 
-# --- Session profiles ----------------------------------------------------
+# Session profiles 
 
 # Each session has its own conditions and driver. Without this, six sessions
 # with different seeds would look nearly identical and session comparison
@@ -47,7 +47,7 @@ MAX_STEPS_PER_LAP = 3000       # safety limit; a normal lap is ~600 steps
 #   fault         a deliberately injected problem, or None
 #
 # The two faults are INTENTIONAL. They exist so the vehicle health analysis
-# has something real to detect, and they are documented as synthetic.
+# has something real to detect
 
 SESSION_PROFILES = [
     {
@@ -101,8 +101,7 @@ SESSION_PROFILES = [
 ]
 
 
-# --- Driver model --------------------------------------------------------
-
+# Driver model 
 
 def choose_inputs(speed_kmh, distance_m, aggression, rng, noise_scale):
     """Decide throttle and brake for the current instant.
@@ -120,35 +119,35 @@ def choose_inputs(speed_kmh, distance_m, aggression, rng, noise_scale):
     section = get_section(distance_m)
     severity = section["severity"]
 
-    # The speed the car wants to be doing right here.
+    # The speed the car wants to be doing right here
     corner_limit = vehicle.cornering_speed_limit(
         section["target_kmh"], severity, aggression
     )
 
     # The slowest thing coming up soon. A more aggressive driver looks a
-    # little less far ahead, which is why they brake later.
+    # little less far ahead, which is why they brake later
     lookahead = LOOKAHEAD_M * (2.0 - aggression)
     upcoming_limit = upcoming_target_speed(distance_m, lookahead) * aggression
 
-    # How far above the upcoming limit the car currently is, as a fraction.
+    # How far above the upcoming limit the car currently is, as a fraction
     overspeed = (speed_kmh - upcoming_limit) / max(upcoming_limit, 1.0)
 
     if overspeed > 0.02:
-        # Need to slow down. Brake harder the further over the limit we are.
+        # Need to slow down, brake harder the further over the limit
         brake = float(np.clip(overspeed * 180.0, 15.0, 100.0))
         throttle = 0.0
     elif speed_kmh < corner_limit * 0.98:
-        # Below target and nothing slower coming up: get on the power.
+        # Below target and nothing slower coming up: get on the power
         # Ease off in tight corners, since the car cannot use full throttle
-        # while it is still turning hard.
+        # while it is still turning hard
         throttle = float(np.clip(100.0 * (1.0 - severity * 0.45), 25.0, 100.0))
         brake = 0.0
     else:
-        # At target speed: maintenance throttle to hold it.
+        # At target speed: maintenance throttle to hold it
         throttle = float(np.clip(42.0 - severity * 12.0, 10.0, 60.0))
         brake = 0.0
 
-    # Small random variation so the driver is not perfectly repeatable.
+    # Small random variation so the driver is not perfectly repeatable
     throttle = float(np.clip(throttle + rng.normal(0.0, 2.5 * noise_scale), 0.0, 100.0))
     if brake > 0.0:
         brake = float(np.clip(brake + rng.normal(0.0, 2.0 * noise_scale), 0.0, 100.0))
@@ -165,18 +164,18 @@ def update_speed(speed_kmh, throttle_pct, brake_pct, section, aggression):
     elif throttle_pct > 0.0:
         available = vehicle.available_acceleration(speed_kmh)
         accel_ms2 += available * (throttle_pct / 100.0)
-        # Coasting losses apply even under power.
+        # Coasting losses apply even under power
         accel_ms2 -= vehicle.COAST_DECEL_MS2 * 0.4
     else:
         accel_ms2 -= vehicle.COAST_DECEL_MS2
 
-    # Convert km/h to m/s, apply the acceleration, convert back.
+    # Convert km/h to m/s, apply the acceleration, convert back
     speed_ms = speed_kmh / 3.6
     speed_ms = max(speed_ms + accel_ms2 * DT_S, 0.0)
     new_speed_kmh = speed_ms * 3.6
 
     # A corner imposes a hard grip limit the car cannot exceed, regardless
-    # of what the driver does with the throttle.
+    # of what the driver does with the throttle
     corner_limit = vehicle.cornering_speed_limit(
         section["target_kmh"], section["severity"], aggression
     )
@@ -186,7 +185,7 @@ def update_speed(speed_kmh, throttle_pct, brake_pct, section, aggression):
     return float(np.clip(new_speed_kmh, 0.0, vehicle.MAX_SPEED_KMH))
 
 
-# --- Derived sensor channels ---------------------------------------------
+# Derived sensor channels 
 
 
 def steering_angle(distance_m, speed_kmh, rng, noise_scale):
@@ -203,12 +202,12 @@ def steering_angle(distance_m, speed_kmh, rng, noise_scale):
     if severity == 0.0 or direction == 0:
         return float(rng.normal(0.0, 1.5 * noise_scale))
 
-    # How far through the corner the car is, 0 at entry and 1 at exit.
+    # How far through the corner the car is, 0 at entry and 1 at exit
     section_length = section["end_m"] - section["start_m"]
     progress = (distance_m % TRACK_LENGTH_M - section["start_m"]) / section_length
     progress = float(np.clip(progress, 0.0, 1.0))
 
-    # Steering builds to a peak mid-corner and unwinds towards the exit.
+    # Steering builds to a peak mid-corner and unwinds towards the exit
     shape = np.sin(progress * np.pi)
 
     angle = vehicle.MAX_STEERING_ANGLE_DEG * severity * shape * direction
@@ -243,8 +242,7 @@ def battery_voltage(throttle_pct, speed_kmh, lap_number, sag_multiplier, rng, no
     return vehicle.NOMINAL_VOLTAGE_V - sag - droop + noise
 
 
-# --- Lap and session simulation ------------------------------------------
-
+# Lap and session simulation 
 
 def simulate_lap(
     session_id,
@@ -267,10 +265,10 @@ def simulate_lap(
 
     # Pace varies within a lap, not just between laps. A driver might nail
     # sector 1 and then make a mistake in sector 3 on the same lap, which
-    # is what makes sector-level comparison worth doing at all.
+    # is what makes sector-level comparison worth doing at all
     #
-    # Each sector gets its own multiplier: a lap-wide component (the driver
-    # is generally on it or not) plus an independent per-sector component.
+    # Each sector gets its own multiplier: a lap wide component (the driver
+    # is generally on it or not) plus an independent per sector component
     lap_pace = rng.normal(1.0, (1.0 - consistency) * 0.035)
     sector_pace = {}
     for sector in SECTORS:
@@ -279,7 +277,7 @@ def simulate_lap(
         sector_pace[sector["name"]] = profile["aggression"] * combined
 
     # Faults. Both are deliberately injected so the health analysis has
-    # something to find; they are synthetic, not discovered problems.
+    # something to find
     cooling_factor = 0.45 if profile["fault"] == "cooling" else 1.0
     sag_multiplier = 2.1 if profile["fault"] == "battery" else 1.0
 
@@ -324,7 +322,7 @@ def simulate_lap(
             }
         )
 
-        # Advance the simulation one step.
+
         speed_kmh = update_speed(speed_kmh, throttle_pct, brake_pct, section, lap_aggression)
         distance_m += (speed_kmh / 3.6) * DT_S
         lap_time_s += DT_S
@@ -341,7 +339,7 @@ def simulate_session(profile, rng):
     rows = []
 
     # The car starts the out-lap from rest and carries speed across the
-    # start/finish line on subsequent laps, as it would in reality.
+    # start/finish line on subsequent laps
     speed_kmh = 0.0
     session_time_s = 0.0
     temp_c = profile["ambient_c"] + vehicle.STARTUP_TEMP_OFFSET_C
@@ -367,7 +365,7 @@ def generate_all_sessions():
 
     for index, profile in enumerate(SESSION_PROFILES):
         # Each session gets its own generator derived from the master seed,
-        # so sessions are independent but the whole run is reproducible.
+        # so sessions are independent but the whole run is reproducible
         rng = np.random.default_rng(RANDOM_SEED + index)
         session_rows = simulate_session(profile, rng)
         all_rows.extend(session_rows)
@@ -379,7 +377,7 @@ def generate_all_sessions():
     return pd.DataFrame(all_rows)
 
 
-# --- Entry point ---------------------------------------------------------
+# Entry point 
 
 
 def main():
@@ -394,7 +392,7 @@ def main():
     print(f"Sessions: {df['session_id'].nunique()}   "
           f"Laps per session: {LAPS_PER_SESSION}")
 
-    # Quick sanity summary so problems are obvious immediately.
+    # Quick sanity summary so problems are obvious immediately
     lap_times = (
         df.groupby(["session_id", "lap_number"])["lap_time_s"].max().reset_index()
     )

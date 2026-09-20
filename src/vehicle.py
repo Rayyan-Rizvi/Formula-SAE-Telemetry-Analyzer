@@ -1,16 +1,12 @@
 """
 Fictional Formula SAE-style vehicle parameters.
 
-These constants describe a made-up electric FSAE car. They are chosen to
-produce plausible telemetry, not to model any real vehicle. Nothing here is
-derived from Queen's University Racing or any other team's data.
-
-The simulation uses a simplified point-mass model: the car accelerates when
+The simulation uses a simplified point mass model: the car accelerates when
 throttle is applied, decelerates under braking and drag, and is limited by a
 cornering speed that depends on how tight the corner is.
 """
 
-# --- Performance limits --------------------------------------------------
+# Performance limits 
 
 MAX_SPEED_KMH = 125.0          # top speed the car can reach on this track
 MAX_ACCEL_MS2 = 7.5            # peak acceleration at full throttle, low speed
@@ -23,35 +19,35 @@ COAST_DECEL_MS2 = 1.2          # drag and rolling resistance when coasting
 ACCEL_FALLOFF_EXPONENT = 1.6
 
 
-# --- Powertrain ----------------------------------------------------------
+# Powertrain 
 
 IDLE_RPM = 1800.0
 MAX_RPM = 12000.0
 
 # The car is modelled with a simple fixed reduction, so RPM tracks wheel
-# speed directly. Real FSAE cars vary; this keeps the relationship legible.
+# speed directly. Real FSAE cars vary; this keeps the relationship legible
 RPM_PER_KMH = (MAX_RPM - IDLE_RPM) / MAX_SPEED_KMH
 
 
-# --- Steering ------------------------------------------------------------
+# Steering 
 
 MAX_STEERING_ANGLE_DEG = 120.0  # steering wheel angle at full lock
 
 
-# --- Thermal -------------------------------------------------------------
+# Thermal 
 
 AMBIENT_TEMP_C = 22.0          # baseline; each session overrides this
 STARTUP_TEMP_OFFSET_C = 18.0   # powertrain starts warmer than ambient
 
 # Heat generated per second at full load, and how fast heat bleeds off to
-# ambient. The ratio of these two sets the equilibrium temperature.
+# ambient
 HEAT_GAIN_RATE = 3.2
 COOLING_RATE = 0.022
 
 MAX_SAFE_TEMP_C = 95.0         # above this the health module flags a warning
 
 
-# --- Electrical ----------------------------------------------------------
+# Electrical 
 
 NOMINAL_VOLTAGE_V = 398.0      # resting pack voltage, fully charged
 VOLTAGE_SAG_PER_LOAD = 14.0    # sag at full load from internal resistance
@@ -60,7 +56,7 @@ VOLTAGE_DROOP_PER_LAP = 0.55   # gradual decline as the pack depletes
 MIN_SAFE_VOLTAGE_V = 370.0     # below this the health module flags a warning
 
 
-# --- Derived helpers -----------------------------------------------------
+# Derived helpers 
 
 
 def available_acceleration(speed_kmh):

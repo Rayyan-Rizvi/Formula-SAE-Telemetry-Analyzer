@@ -7,7 +7,7 @@ different shape from the normalised database schema, so this module does
 the flattening once here rather than leaving it to be redone by hand in
 the dashboard tool.
 
-Written to data/exports/, which is what Stage 12's dashboard reads.
+
 """
 
 import os
@@ -152,7 +152,7 @@ def export_lap_comparison():
     """Distance-aligned comparison of the baseline session's best and worst laps.
 
     A dashboard cannot easily do the interpolation this needs, so the
-    comparison is computed here and exported as a ready-made table.
+    comparison is computed here and exported as a ready made table.
     """
     laps = run_query(
         """

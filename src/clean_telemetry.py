@@ -7,10 +7,7 @@ turns it into two things:
   1. A validated, cleaned copy of the sample data.
   2. A lap summary table with one row per lap.
 
-The validation step exists because a telemetry pipeline should not assume
-its input is perfect. Our generated data is clean by construction, so the
-checks normally find nothing -- but the same code would catch dropouts,
-stuck sensors, and out-of-range readings in a real logger file.
+
 """
 
 import numpy as np
@@ -25,13 +22,13 @@ LAP_SUMMARY_PATH = "data/processed/lap_summary.csv"
 SECTOR_SUMMARY_PATH = "data/processed/sector_summary.csv"
 
 # A sample is counted as full throttle above this, and as a braking event
-# above the brake threshold. Both are judgement calls, so they live here as
-# named constants rather than being buried as magic numbers in the code.
+# above the brake threshold.
+
 FULL_THROTTLE_THRESHOLD_PCT = 90.0
 BRAKING_EVENT_THRESHOLD_PCT = 30.0
 
-# Physically sensible ranges for each channel. Anything outside these is
-# either a sensor fault or a bug in the generator.
+# Physically sensible ranges for each channel
+
 VALID_RANGES = {
     "speed_kmh": (0.0, vehicle.MAX_SPEED_KMH + 5.0),
     "throttle_pct": (0.0, 100.0),
@@ -45,17 +42,17 @@ VALID_RANGES = {
 }
 
 
-# --- Validation ----------------------------------------------------------
+# Validation 
 
 
 def check_missing_values(df):
-    """Return a dict of column name -> count of missing values."""
+    """Return a dict of column name - count of missing values."""
     missing = df.isna().sum()
     return {column: int(count) for column, count in missing.items() if count > 0}
 
 
 def check_out_of_range(df):
-    """Return a dict of column name -> count of readings outside valid range."""
+    """Return a dict of column name - count of readings outside valid range."""
     problems = {}
     for column, (low, high) in VALID_RANGES.items():
         if column not in df.columns:
@@ -67,20 +64,16 @@ def check_out_of_range(df):
 
 
 def check_duplicate_samples(df):
-    """Return the number of duplicated (session, lap, lap_time) rows.
-
-    Two samples at the same instant of the same lap means something went
-    wrong upstream -- a logger writing twice, or a bad merge.
+    """
+    Return the number of duplicated (session, lap, lap_time) rows.
     """
     key = ["session_id", "lap_number", "lap_time_s"]
     return int(df.duplicated(subset=key).sum())
 
 
 def check_distance_monotonic(df):
-    """Return the number of laps where distance does not increase.
-
-    Distance along a lap should only ever go up. A decrease means samples
-    are out of order or a lap boundary was detected incorrectly.
+    """
+    Return the number of laps where distance does not increase.
     """
     bad_laps = 0
     for _, lap in df.groupby(["session_id", "lap_number"]):
@@ -91,13 +84,8 @@ def check_distance_monotonic(df):
 
 
 def clean_telemetry(df, verbose=True):
-    """Validate and clean the telemetry, returning the cleaned DataFrame.
-
-    Cleaning is deliberately conservative: values outside the valid range
-    are clipped back to the boundary rather than dropped, because losing a
-    sample breaks the even time spacing the rest of the analysis relies on.
-    Missing values are filled forward, which is the standard approach for a
-    brief sensor dropout.
+    """
+    Validate and clean the telemetry, returning the cleaned DataFrame.
     """
     df = df.copy()
 
@@ -119,19 +107,19 @@ def clean_telemetry(df, verbose=True):
         if out_of_range:
             print(f"    out of range:       {out_of_range}")
 
-    # Fill short sensor dropouts forward, then back for any leading gap.
+    # Fill short sensor dropouts forward, then back for any leading gap
     numeric_columns = df.select_dtypes(include=[np.number]).columns
     df[numeric_columns] = df[numeric_columns].ffill().bfill()
 
-    # Clip anything outside physical limits back to the boundary.
+    # Clip anything outside physical limits back to the boundary
     for column, (low, high) in VALID_RANGES.items():
         if column in df.columns:
             df[column] = df[column].clip(low, high)
 
-    # Drop exact duplicate samples, keeping the first.
+    # Drop exact duplicate samples, keeping the first
     df = df.drop_duplicates(subset=["session_id", "lap_number", "lap_time_s"], keep="first")
 
-    # Guarantee a consistent order for everything downstream.
+    # Guarantee a consistent order for everything downstream
     df = df.sort_values(["session_id", "lap_number", "lap_time_s"]).reset_index(drop=True)
 
     if verbose:
@@ -140,22 +128,23 @@ def clean_telemetry(df, verbose=True):
     return df
 
 
-# --- Lap aggregation -----------------------------------------------------
+# Lap aggregation 
 
 
 def summarise_lap(lap):
     """Return a dict of summary metrics for one lap's samples."""
     sample_count = len(lap)
 
-    # Lap time is the last timestamp in the lap. Because samples are evenly
-    # spaced in time, this is the true elapsed time, not an estimate.
+    # Lap time is the last timestamp in the lap
+
     lap_time_s = float(lap["lap_time_s"].max())
 
     full_throttle_samples = int((lap["throttle_pct"] >= FULL_THROTTLE_THRESHOLD_PCT).sum())
 
     # A braking event is a contiguous run of samples above the threshold.
     # Counting transitions from "not braking" to "braking" gives the number
-    # of distinct events rather than the number of braking samples.
+    # of distinct events rather than the number of braking samples
+
     braking = lap["brake_pressure_pct"] >= BRAKING_EVENT_THRESHOLD_PCT
     braking_events = int((braking & ~braking.shift(1, fill_value=False)).sum())
 
@@ -187,22 +176,21 @@ def build_lap_summary(df):
 
     summary = pd.DataFrame(rows)
 
-    # Rank laps within each session, fastest first. This is the same idea
-    # as the SQL RANK() window function we use later, done in Pandas.
+    # Rank laps within each session, fastest first
+
     summary["lap_rank_in_session"] = (
         summary.groupby("session_id")["lap_time_s"].rank(method="min").astype(int)
     )
 
-    # Gap to the session's fastest lap, which is how lap times are normally
-    # presented to a driver.
+    # Gap to the session's fastest lap
+
     session_best = summary.groupby("session_id")["lap_time_s"].transform("min")
     summary["gap_to_session_best_s"] = (summary["lap_time_s"] - session_best).round(2)
 
     return summary.sort_values(["session_id", "lap_number"]).reset_index(drop=True)
 
 
-# --- Sector aggregation --------------------------------------------------
-
+# Sector aggregation 
 
 def build_sector_summary(df):
     """Return a DataFrame with one row per lap per sector.
@@ -247,15 +235,15 @@ def build_sector_summary(df):
 
     sectors = pd.DataFrame(rows)
 
-    # Best time in each sector across all laps of a session -- the basis of
-    # a theoretical best lap.
+    # Best time in each sector across all laps of a session 
+
     session_sector_best = sectors.groupby(["session_id", "sector"])["sector_time_s"].transform("min")
     sectors["gap_to_sector_best_s"] = (sectors["sector_time_s"] - session_sector_best).round(2)
 
     return sectors.sort_values(["session_id", "lap_number", "sector"]).reset_index(drop=True)
 
 
-# --- Entry point ---------------------------------------------------------
+# Entry 
 
 
 def main():

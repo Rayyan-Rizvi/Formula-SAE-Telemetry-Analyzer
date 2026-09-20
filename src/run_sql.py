@@ -5,8 +5,7 @@ Queries live in sql/*.sql, each preceded by a "-- name: <id>" comment.
 This module splits those files on the name markers so any query can be run
 by name from the command line or imported into the notebook.
 
-Keeping the SQL in .sql files rather than as Python strings means it stays
-readable, syntax-highlighted, and reviewable on its own.
+
 """
 
 import re
@@ -19,7 +18,7 @@ SQL_FILES = [
     "sql/vehicle_health.sql",
 ]
 
-# Matches "-- name: some_identifier" at the start of a line.
+# Matches "-- name: some_identifier" at the start of a line
 NAME_PATTERN = re.compile(r"^--\s*name:\s*(\w+)\s*$", re.MULTILINE)
 
 
@@ -36,7 +35,7 @@ def load_queries(paths=None):
         for index, match in enumerate(matches):
             name = match.group(1)
             start = match.end()
-            # A query runs until the next name marker, or the end of file.
+            # A query runs until the next name marker, or the end of file
             end = matches[index + 1].start() if index + 1 < len(matches) else len(content)
             queries[name] = content[start:end].strip()
 
@@ -58,7 +57,7 @@ def main():
     if len(sys.argv) < 2:
         print("Saved queries:\n")
         for name in sorted(queries):
-            # Show the first comment line under the name marker as a hint.
+            # Show the first comment line under the name marker as a hint
             first_comment = ""
             for line in queries[name].splitlines():
                 if line.strip().startswith("--"):

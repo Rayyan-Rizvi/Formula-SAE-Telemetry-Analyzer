@@ -1,9 +1,7 @@
 """
 Builds notebooks/telemetry_analysis.ipynb.
 
-A notebook file is JSON, which is awkward to write by hand, so the content
-is defined here as cells and written out programmatically. Run this once;
-after that, edit the notebook directly in Jupyter.
+
 """
 
 import json
@@ -264,7 +262,7 @@ def build():
     cells = []
     for cell_type, source in CELLS:
         # Jupyter stores source as a list of lines, each ending in a
-        # newline except the last.
+        # newline except the last
         lines = source.split("\n")
         source_lines = [line + "\n" for line in lines[:-1]] + [lines[-1]]
 

@@ -5,9 +5,7 @@ Reads from SQLite using the saved queries in sql/, adds the derived metrics
 that are more natural to express in Python than SQL, and formats results
 for printing or export.
 
-Everything here describes simulated results from synthetic telemetry. The
-health checks are simple threshold observations about a fictional vehicle,
-not diagnostics.
+
 """
 
 import pandas as pd
@@ -16,17 +14,15 @@ from src import vehicle
 from src.database import run_query
 from src.run_sql import run_named_query
 
-# Thresholds for the health checks. These are judgement calls about a
-# fictional car, so they live here as named constants rather than being
-# scattered through the code as magic numbers.
-TEMP_ELEVATED_C = 95.0
+# Thresholds for the health checks 
 TEMP_HIGH_C = 110.0
+TEMP_ELEVATED_C = 95.0
 VOLTAGE_MARGINAL_V = 375.0
 VOLTAGE_LOW_V = 370.0
 RPM_HIGH_FRACTION = 0.97   # fraction of redline that counts as high
 
 
-# --- Session analysis ----------------------------------------------------
+# Session analysis 
 
 
 def session_summary():
@@ -59,7 +55,7 @@ def lap_detail(session_id=None):
 
     laps = run_query(sql, params)
 
-    # Rank and gap are cheap to add here and keep the SQL simpler.
+    # Rank and gap are cheap to add here and keep the SQL simpler
     laps["rank_in_session"] = (
         laps.groupby("session_id")["lap_time_s"].rank(method="min").astype(int)
     )
@@ -96,7 +92,8 @@ def consistency_metrics():
     ).reset_index()
 
     # Coefficient of variation expresses spread relative to pace, so a
-    # slow-but-repeatable driver is not penalised against a quick one.
+    # slow driver is not penalised against a quick one
+
     summary["variation_pct"] = (
         100.0 * summary["std_dev_s"] / summary["mean_lap_s"]
     ).round(3)
@@ -104,7 +101,7 @@ def consistency_metrics():
     return summary.sort_values("std_dev_s").reset_index(drop=True)
 
 
-# --- Sector analysis -----------------------------------------------------
+# Sector analysis 
 
 
 def sector_summary():
@@ -116,8 +113,7 @@ def sector_strengths():
     """Return each session's strongest and weakest sector relative to field.
 
     A session's raw sector time depends on how quick the driver is overall.
-    Comparing each session's sector time to the field average for that
-    sector shows where a driver is relatively strong, independent of pace.
+
     """
     sectors = run_query(
         """
@@ -149,7 +145,7 @@ def sector_strengths():
     return pd.DataFrame(rows).sort_values("session_id").reset_index(drop=True)
 
 
-# --- Vehicle health ------------------------------------------------------
+# Vehicle health 
 
 
 def classify_temperature(peak_temp_c):
@@ -182,8 +178,7 @@ def health_report():
 
     Temperature is compared to ambient as well as in absolute terms: a car
     running 100 C on a 35 C day is less remarkable than the same reading on
-    a 15 C day, and the difference is what points at a cooling problem
-    rather than just a hot afternoon.
+    a 15 C day.
     """
     data = run_query(
         """
@@ -275,7 +270,7 @@ def health_notes():
     return pd.DataFrame(notes)
 
 
-# --- Report assembly -----------------------------------------------------
+# Report assembly 
 
 
 def print_section(title):

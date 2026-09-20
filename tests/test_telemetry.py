@@ -97,7 +97,7 @@ def test_lap_times_are_positive_and_plausible(one_session):
     assert (lap_times > 0).all()
     assert lap_times.between(40.0, 90.0).all()
 
-    # The out-lap starts from a standstill, so it is always the slowest.
+    # The out-lap starts from a standstill, so it is always the slowest
     assert lap_times.loc[1] == lap_times.max()
 
 

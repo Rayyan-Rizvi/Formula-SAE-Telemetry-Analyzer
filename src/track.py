@@ -1,22 +1,21 @@
 """
-Fictional Formula SAE-style track definition.
+Fictional Formula track definition.
 
 The track is modelled as a single distance line from 0m to TRACK_LENGTH_M.
 Every point on that line belongs to exactly one named section, which carries
 the target speed and cornering characteristics the simulated driver aims for.
 
-This is a made-up circuit, the numbers are chosen to be plausible for an FSAE autocross-style layout rather than to
-model a specific car or track.
+
 """
 
-# --- Track geometry ------------------------------------------------------
+# Track geometry 
 
 # Total lap distance in metres. FSAE autocross laps are typically short and
-# tight compared to full-size circuits.
+# tight compared to full-size circuits
 TRACK_LENGTH_M = 1100.0
 
 
-# --- Section definitions -------------------------------------------------
+# Section definitions
 
 # Each section describes one stretch of the lap:
 #
@@ -98,10 +97,10 @@ TRACK_SECTIONS = [
 ]
 
 
-# --- Timing sectors ------------------------------------------------------
+# Timing sectors 
 
 # Sectors group sections into three contiguous timing segments, the way a
-# real circuit splits a lap. Sector times are what get compared between laps.
+# real circuit splits a lap. 
 
 SECTORS = [
     {"name": "Sector 1", "start_m": 0.0, "end_m": 390.0},
@@ -110,7 +109,7 @@ SECTORS = [
 ]
 
 
-# --- Lookup helpers ------------------------------------------------------
+# Lookup helpers 
 
 
 def get_section(distance_m):
@@ -124,7 +123,7 @@ def get_section(distance_m):
         if section["start_m"] <= d < section["end_m"]:
             return section
     # Only reachable through floating-point edge cases at the very end
-    # of the lap; the final section is the correct answer there.
+    # of the lap; the final section is the correct answer there
     return TRACK_SECTIONS[-1]
 
 
@@ -166,7 +165,7 @@ def validate_track():
 
     Raises ValueError if sections have gaps, overlap, or do not span the
     full lap. Called on import so a typo in the table fails loudly and
-    immediately rather than silently producing strange telemetry.
+    immediately.
     """
     if TRACK_SECTIONS[0]["start_m"] != 0.0:
         raise ValueError("First section must start at 0 m")
@@ -192,7 +191,7 @@ def validate_track():
 validate_track()
 
 
-# --- Manual inspection ---------------------------------------------------
+# Manual inspection
 
 if __name__ == "__main__":
     print(f"Track length: {TRACK_LENGTH_M:.0f} m")

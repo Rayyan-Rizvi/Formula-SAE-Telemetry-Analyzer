@@ -1,9 +1,8 @@
 -- Formula SAE Telemetry Analyzer - database schema
---
+
 -- Four tables in a simple star layout: sessions is the parent, laps and
--- sectors hang off it, and telemetry holds the raw samples.
---
--- All data is synthetic. See README for details.
+-- sectors hang off it, and telemetry holds the raw samples
+
 
 DROP TABLE IF EXISTS telemetry;
 DROP TABLE IF EXISTS sectors;
@@ -11,9 +10,9 @@ DROP TABLE IF EXISTS laps;
 DROP TABLE IF EXISTS sessions;
 
 
--- One row per simulated session.
+-- One row per simulated session
 -- The profile columns record the conditions the session was generated
--- under, which is what makes cross-session comparison meaningful.
+-- under, which is what makes cross-session comparison meaningful
 CREATE TABLE sessions (
     session_id       TEXT PRIMARY KEY,
     label            TEXT NOT NULL,
@@ -31,7 +30,7 @@ CREATE TABLE sessions (
 
 
 -- One row per lap. Metrics come from the lap summary built in
--- clean_telemetry.py, so the database and the CSVs cannot disagree.
+-- clean_telemetry.py, so the database and the CSVs cannot disagree
 CREATE TABLE laps (
     lap_id             INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id         TEXT NOT NULL,
@@ -53,7 +52,7 @@ CREATE TABLE laps (
 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id),
 
-    -- A session cannot have two laps with the same number.
+    -- A session cannot have two laps with the same number
     UNIQUE (session_id, lap_number),
 
     CHECK (lap_time_s > 0),
@@ -63,7 +62,7 @@ CREATE TABLE laps (
 );
 
 
--- One row per sector per lap. Three sectors per lap.
+-- One row per sector per lap. Three sectors per lap
 CREATE TABLE sectors (
     sector_id      INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id     TEXT NOT NULL,
@@ -84,7 +83,7 @@ CREATE TABLE sectors (
 );
 
 
--- One row per telemetry sample. This is the large table.
+-- One row per telemetry sample. This is the large table
 CREATE TABLE telemetry (
     sample_id          INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id         TEXT NOT NULL,
@@ -111,8 +110,8 @@ CREATE TABLE telemetry (
 );
 
 
--- Indexes on the columns the analysis queries filter and join by.
--- Without these, every lap-comparison query scans all 27,820 rows.
+-- Indexes on the columns the analysis queries filter and join by
+-- Without these, every lap-comparison query scans all 27,820 rows
 CREATE INDEX idx_telemetry_session_lap ON telemetry(session_id, lap_number);
 CREATE INDEX idx_telemetry_distance    ON telemetry(distance_m);
 CREATE INDEX idx_telemetry_section     ON telemetry(track_section);
