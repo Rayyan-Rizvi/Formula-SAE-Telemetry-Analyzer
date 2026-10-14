@@ -29,3 +29,6 @@ Thumbs.db
 .~*.twb
 .~*.twbr
 .~*.twbx
+
+# Environment variables
+.env
